@@ -1,0 +1,15 @@
+# .NET build çıktıları
+src/**/bin/
+src/**/obj/
+
+# Güvenlik: private key içeren lisans üretim aracı ASLA commit edilmez
+tools/
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# Windows
+Thumbs.db
+Desktop.ini

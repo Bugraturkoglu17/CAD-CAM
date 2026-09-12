@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{27D78065-5086-4A79-93C4-CF1F0BFACEA1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadAutomation.Core", "src\CadAutomation.Core\CadAutomation.Core.csproj", "{D023F3B5-C2B0-4301-9F50-CB751924B59D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadAutomation.Core.Tests", "src\CadAutomation.Core.Tests\CadAutomation.Core.Tests.csproj", "{4EEA5474-7EC1-4EEA-9C38-71DB9E53BBC8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadAutomation.Licensing", "src\CadAutomation.Licensing\CadAutomation.Licensing.csproj", "{37AA9637-0CC7-47FE-AA07-7CFCE9BACC2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadAutomation.Licensing.Tests", "src\CadAutomation.Licensing.Tests\CadAutomation.Licensing.Tests.csproj", "{E6E4D576-6735-4FB0-A5AF-E0F9D67E007B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{425B4AC6-DA80-438B-805E-123FF09A5FDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadAutomation.Licensing.Generator", "tools\CadAutomation.Licensing.Generator\CadAutomation.Licensing.Generator.csproj", "{47E910AF-23DD-485C-AD8F-015717062D2A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D023F3B5-C2B0-4301-9F50-CB751924B59D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D023F3B5-C2B0-4301-9F50-CB751924B59D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D023F3B5-C2B0-4301-9F50-CB751924B59D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D023F3B5-C2B0-4301-9F50-CB751924B59D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EEA5474-7EC1-4EEA-9C38-71DB9E53BBC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EEA5474-7EC1-4EEA-9C38-71DB9E53BBC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EEA5474-7EC1-4EEA-9C38-71DB9E53BBC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EEA5474-7EC1-4EEA-9C38-71DB9E53BBC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37AA9637-0CC7-47FE-AA07-7CFCE9BACC2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37AA9637-0CC7-47FE-AA07-7CFCE9BACC2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37AA9637-0CC7-47FE-AA07-7CFCE9BACC2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37AA9637-0CC7-47FE-AA07-7CFCE9BACC2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6E4D576-6735-4FB0-A5AF-E0F9D67E007B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6E4D576-6735-4FB0-A5AF-E0F9D67E007B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6E4D576-6735-4FB0-A5AF-E0F9D67E007B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6E4D576-6735-4FB0-A5AF-E0F9D67E007B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47E910AF-23DD-485C-AD8F-015717062D2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47E910AF-23DD-485C-AD8F-015717062D2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47E910AF-23DD-485C-AD8F-015717062D2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47E910AF-23DD-485C-AD8F-015717062D2A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D023F3B5-C2B0-4301-9F50-CB751924B59D} = {27D78065-5086-4A79-93C4-CF1F0BFACEA1}
+		{4EEA5474-7EC1-4EEA-9C38-71DB9E53BBC8} = {27D78065-5086-4A79-93C4-CF1F0BFACEA1}
+		{37AA9637-0CC7-47FE-AA07-7CFCE9BACC2E} = {27D78065-5086-4A79-93C4-CF1F0BFACEA1}
+		{E6E4D576-6735-4FB0-A5AF-E0F9D67E007B} = {27D78065-5086-4A79-93C4-CF1F0BFACEA1}
+		{47E910AF-23DD-485C-AD8F-015717062D2A} = {425B4AC6-DA80-438B-805E-123FF09A5FDC}
+	EndGlobalSection
+EndGlobal
