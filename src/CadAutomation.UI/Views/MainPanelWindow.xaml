@@ -1,0 +1,160 @@
+<Window x:Class="CadAutomation.UI.Views.MainPanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:CadAutomation.UI.Converters"
+        Title="CAD Automation" Height="640" Width="380"
+        MinHeight="560" MinWidth="340"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/CadAutomation.UI;component/Theme/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Başlık -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="CAD AUTOMATION" Foreground="{StaticResource TextPrimaryBrush}" FontSize="20" FontWeight="Bold"/>
+            <TextBlock Text="Sheet Metal Otomasyon Paneli" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+            <StackPanel>
+
+                <!-- Çıkış klasörü -->
+                <TextBlock Text="ÇIKIŞ KLASÖRÜ" Style="{StaticResource SectionHeaderStyle}"/>
+                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding OutputFolder, TargetNullValue='Henüz seçilmedi'}"
+                                   Style="{StaticResource BodyTextStyle}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="Gözat..." Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding BrowseFolderCommand}" Margin="8,0,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- İşlemler -->
+                <TextBlock Text="İŞLEMLER" Style="{StaticResource SectionHeaderStyle}"/>
+                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12,8">
+                    <StackPanel>
+                        <CheckBox Content="Sheet Metal parçalarını bul" IsChecked="{Binding DetectSheetMetal, Mode=OneWay}" IsEnabled="False" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Flat Pattern oluştur" IsChecked="{Binding CreateFlatPattern}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Export dosyası oluştur" IsChecked="{Binding ExportDxf}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <StackPanel Orientation="Horizontal" Margin="24,0,0,6" IsEnabled="{Binding ExportDxf}">
+                            <RadioButton Content="DXF" GroupName="ExportFormat" IsChecked="{Binding IsDxfFormat}"
+                                         Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" Margin="0,0,16,0"/>
+                            <RadioButton Content="DWG" GroupName="ExportFormat" IsChecked="{Binding IsDwgFormat}"
+                                         Foreground="{StaticResource TextPrimaryBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <CheckBox Content="Kalınlığa göre klasörle" IsChecked="{Binding FolderByThickness}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Markalama oluştur" IsChecked="{Binding CreateMarking}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Büküm çizgilerini göster" IsChecked="{Binding ShowBendLines}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Parça adını yaz" IsChecked="{Binding AddPartLabel}" Style="{StaticResource OptionCheckBoxStyle}"/>
+
+                        <Separator Margin="0,8" Background="{StaticResource BorderBrush}"/>
+
+                        <Button Command="{Binding ShowLicenseInfoCommand}" Style="{StaticResource LockedRowStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔒" Margin="0,0,8,0" Opacity="0.6"/>
+                                <TextBlock Text="Temel ölçülendirme" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" VerticalAlignment="Center"/>
+                                <Border Background="{StaticResource ProBadgeBrush}" CornerRadius="3" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding ShowLicenseInfoCommand}" Style="{StaticResource LockedRowStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔒" Margin="0,0,8,0" Opacity="0.6"/>
+                                <TextBlock Text="BOM / Envanter Excel" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" VerticalAlignment="Center"/>
+                                <Border Background="{StaticResource ProBadgeBrush}" CornerRadius="3" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding ShowLicenseInfoCommand}" Style="{StaticResource LockedRowStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔒" Margin="0,0,8,0" Opacity="0.6"/>
+                                <TextBlock Text="Teknik resimleri dışa aktar" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" VerticalAlignment="Center"/>
+                                <Border Background="{StaticResource ProBadgeBrush}" CornerRadius="3" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Ayarlar -->
+                <TextBlock Text="AYARLAR" Style="{StaticResource SectionHeaderStyle}"/>
+                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10">
+                    <StackPanel>
+                        <TextBlock Text="Büküm Çizgisi Rengi" Style="{StaticResource BodyTextStyle}" FontSize="12" Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding BendLineColorOptions}" SelectedItem="{Binding SelectedBendLineColor}"
+                                  DisplayMemberPath="Name" Padding="8,6"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Analiz sonucu -->
+                <TextBlock Text="ANALİZ SONUCU" Style="{StaticResource SectionHeaderStyle}"
+                           Visibility="{Binding HasAnalysisResult, Converter={x:Static local:BoolToVisibilityConverter.Instance}}"/>
+                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12"
+                        Visibility="{Binding HasAnalysisResult, Converter={x:Static local:BoolToVisibilityConverter.Instance}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Toplam Component" Style="{StaticResource BodyTextStyle}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalComponentCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Unique Part" Style="{StaticResource BodyTextStyle}" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UniquePartCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,6,0,0"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Sheet Metal" Style="{StaticResource BodyTextStyle}" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SheetMetalCount}" Foreground="{StaticResource AccentBrush}" FontSize="13" FontWeight="Bold" Margin="0,6,0,0"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Atlanan (Suppressed)" Style="{StaticResource BodyTextStyle}" Margin="0,6,0,0"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SkippedCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,6,0,0"/>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Alt bar: durum + butonlar -->
+        <StackPanel Grid.Row="2" Margin="0,16,0,0">
+            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodyTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="ANALİZ ET" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding AnalyzeCommand}" Padding="12,10"/>
+                <Button Grid.Column="2" Content="İŞLEMİ BAŞLAT" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartProcessCommand}"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>
