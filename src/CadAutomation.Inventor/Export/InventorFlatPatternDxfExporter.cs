@@ -16,9 +16,10 @@ namespace CadAutomation.Inventor.Export
     /// DXF export, FlatPattern.DataIO.WriteDataToFile ile yapılıyor - Inventor'ın generic
     /// TranslatorAddIn.SaveCopyAs mekanizması yerine flat pattern'e özel, daha basit API.
     /// </summary>
-    public sealed class InventorFlatPatternDxfExporter : IFlatPatternDxfExporter
+    public sealed class InventorFlatPatternDxfExporter : IFlatPatternDxfExporter, IBatchExportFinalizer
     {
         private readonly NamingTemplateEngine _namingEngine = new NamingTemplateEngine();
+        private readonly List<string> _pendingDwgScaleFiles = new List<string>();
 
         /// <summary>
         /// Inventor'ın flat pattern DXF çıktısına varsayılan olarak eklediği, büküm merkez çizgisinin
@@ -31,6 +32,7 @@ namespace CadAutomation.Inventor.Export
             "IV_TANGENT",
             "IV_FEATURE_PROFILES",
             "IV_FEATURE_PROFILES_DOWN",
+            "IV_ROLL_TANGENT",
         };
 
         public PartProcessResult ExportPart(UniquePart part, BatchExportOptions options)
@@ -88,6 +90,13 @@ namespace CadAutomation.Inventor.Export
                 var translatorOptions = BuildTranslatorOptions(options);
                 flatPattern.DataIO.WriteDataToFile(translatorOptions, fullPath);
 
+                if (options.Format == ExportFormat.Dwg &&
+                    options.ShowBendLines &&
+                    options.LayerMapping.BendLineTypeScale > 0)
+                {
+                    _pendingDwgScaleFiles.Add(fullPath);
+                }
+
                 if (options.Format == ExportFormat.Dxf)
                 {
                     if (options.ShowBendLines)
@@ -132,6 +141,30 @@ namespace CadAutomation.Inventor.Export
             }
         }
 
+        public PartProcessResult? CompleteBatch(BatchExportOptions options)
+        {
+            if (_pendingDwgScaleFiles.Count == 0) return null;
+
+            try
+            {
+                DwgLineTypeScaleAdjuster.Apply(
+                    _pendingDwgScaleFiles,
+                    options.LayerMapping.BendLineTypeScale);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new PartProcessResult(
+                    "DWG çizgi ölçeği",
+                    PartProcessStatus.Warning,
+                    "DWG dosyaları oluşturuldu ancak kesikli çizgi ölçeği uygulanamadı: " + ex.Message);
+            }
+            finally
+            {
+                _pendingDwgScaleFiles.Clear();
+            }
+        }
+
         /// <summary>
         /// Inventor'ın FlatPattern DXF/DWG çevirmeni için "isim=değer" query-string formatında
         /// options. Layer isimleri madde 7-8'deki gereksinime göre kullanıcı tanımlı (LayerMapping);
@@ -144,34 +177,79 @@ namespace CadAutomation.Inventor.Export
 
             sb.Append("OuterProfileLayer=").Append(options.LayerMapping.OutlineLayer);
             sb.Append("&InteriorProfilesLayer=").Append(options.LayerMapping.OutlineLayer);
+            AppendLayerColorOption(sb, "OuterProfileLayer", options.LayerMapping.OutlineColorAci);
+            AppendLayerColorOption(sb, "InteriorProfilesLayer", options.LayerMapping.OutlineColorAci);
 
             if (options.ShowBendLines)
             {
                 sb.Append("&BendUpLayer=").Append(options.LayerMapping.BendUpLayer);
                 sb.Append("&BendDownLayer=").Append(options.LayerMapping.BendDownLayer);
+
+                if (options.LayerMapping.BendLineColorAci.HasValue)
+                {
+                    AppendLayerColorOption(sb, "BendUpLayer", options.LayerMapping.BendLineColorAci.Value);
+                    AppendLayerColorOption(sb, "BendDownLayer", options.LayerMapping.BendLineColorAci.Value);
+                }
+
+                var bendLineType = ResolveInventorLineType(options.LayerMapping.BendLineType);
+                sb.Append("&BendUpLayerLineType=").Append(bendLineType);
+                sb.Append("&BendDownLayerLineType=").Append(bendLineType);
             }
 
-            // Kullanıcı isteği (2026-09-15): büküm çizgisinin sağında/solunda görünen, kesime
-            // karışabilecek tanjant/geçiş referans çizgileri (EK2'deki "oval/radius" görünümlü
-            // uçlar) hiç export'a dahil edilmemeli. Önceki yaklaşım bunları DXF export SONRASI
-            // metin post-process ile (DxfLayerRemover) siliyordu - ama bu sadece DXF için işliyordu,
-            // DWG binary olduğu için hiç temizlenmiyordu (kullanıcı DWG ile test edince fark etti).
-            // Çevirmenin kendi "ShowTangentLines=False" seçeneğiyle bunları KAYNAKTA, her iki
-            // formatta da devre dışı bırakmak hem DWG'yi de düzeltiyor hem de artık post-process'e
-            // gerek bırakmıyor (translator hiç üretmiyor, silinecek bir şey kalmıyor).
-            sb.Append("&ShowTangentLines=False");
+            // Büküm merkez çizgisinin iki yanındaki radius/tanjant sınırları lazer kesim yolu
+            // değildir. DataIO'nun belgelenmiş InvisibleLayers seçeneği bunları DXF ve DWG'de
+            // kaynaktan gizler. ShowBendLines kapalıysa merkez çizgileri de gizlenir.
+            var invisibleLayers = new List<string>(BendReferenceLayersToStrip);
+            if (!options.ShowBendLines)
+            {
+                invisibleLayers.Add("IV_BEND");
+                invisibleLayers.Add("IV_BEND_DOWN");
+            }
+            sb.Append("&InvisibleLayers=").Append(string.Join(";", invisibleLayers));
 
             if (options.CreateMarking)
             {
                 sb.Append("&EngraveLayer=").Append(options.LayerMapping.MarkingLayer);
+                AppendLayerColorOption(sb, "EngraveLayer", options.LayerMapping.MarkingColorAci);
             }
 
             return sb.ToString();
         }
 
+        private static void AppendLayerColorOption(StringBuilder sb, string optionName, int aciColor)
+        {
+            var rgb = ConvertAciToRgb(aciColor);
+            sb.Append('&').Append(optionName).Append("Color=")
+                .Append(rgb.R).Append(';').Append(rgb.G).Append(';').Append(rgb.B);
+        }
+
+        private static (int R, int G, int B) ConvertAciToRgb(int aciColor)
+        {
+            switch (aciColor)
+            {
+                case 1: return (255, 0, 0);       // Kırmızı
+                case 2: return (255, 255, 0);     // Sarı
+                case 3: return (0, 255, 0);       // Yeşil
+                case 5: return (0, 0, 255);       // Mavi
+                case 30: return (255, 127, 0);    // Turuncu
+                case 7: return (255, 255, 255);   // Beyaz/siyah (arka plana bağlı)
+                default: return (255, 255, 255);
+            }
+        }
+
+        private static long ResolveInventorLineType(string lineType)
+        {
+            if (string.Equals(lineType, "DASHDOT", StringComparison.OrdinalIgnoreCase))
+                return (long)Inv.LineTypeEnum.kDashDottedLineType;
+            if (string.Equals(lineType, "DOTTED", StringComparison.OrdinalIgnoreCase))
+                return (long)Inv.LineTypeEnum.kDottedLineType;
+
+            return (long)Inv.LineTypeEnum.kDashedLineType;
+        }
+
         /// <summary>
-        /// DXF export'undan SONRA post-process ile uygulanacak layer->renk (ACI) eşlemesi.
-        /// WriteDataToFile'ın options string'i renk ayarlamaya izin vermiyor, bu yüzden ayrı adım.
+        /// DXF export'undan sonra doğrulama/fallback olarak uygulanacak layer->renk (ACI) eşlemesi.
+        /// Renk çeviriciye de verilir; bu adım metin tabanlı DXF çıktısını kesinleştirir.
         /// </summary>
         private static IReadOnlyDictionary<string, int> BuildLayerColors(BatchExportOptions options)
         {

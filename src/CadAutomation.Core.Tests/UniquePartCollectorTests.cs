@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using CadAutomation.Core.Abstractions;
 using CadAutomation.Core.Services;
 using CadAutomation.Core.Tests.TestDoubles;
 using Xunit;
@@ -90,6 +91,32 @@ namespace CadAutomation.Core.Tests
 
             Assert.Equal(2, result.UniquePartCount);
             Assert.Equal(1, result.SheetMetalCount);
+        }
+
+        [Fact]
+        public void Erisilemeyen_occurrence_atlanir_ve_diger_parcalar_analiz_edilir()
+        {
+            var first = new FakeCadDocument(@"C:\parts\first.ipt", isSheetMetal: true);
+            var second = new FakeCadDocument(@"C:\parts\second.ipt", isSheetMetal: true);
+            var assembly = new FakeCadAssemblyRoot(new List<ICadOccurrence>
+            {
+                new FakeCadOccurrence(first),
+                new FailingCadOccurrence(),
+                new FakeCadOccurrence(second),
+            });
+
+            var result = new UniquePartCollector().Collect(assembly);
+
+            Assert.Equal(2, result.TotalComponentCount);
+            Assert.Equal(2, result.UniquePartCount);
+            Assert.Equal(1, result.SkippedSuppressedCount);
+        }
+
+        private sealed class FailingCadOccurrence : ICadOccurrence
+        {
+            public ICadDocument Document => throw new System.Runtime.InteropServices.COMException("E_FAIL");
+            public bool Suppressed => false;
+            public IReadOnlyList<ICadOccurrence> ChildOccurrences => System.Array.Empty<ICadOccurrence>();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace CadAutomation.Core.Models
         public bool FolderByThickness { get; set; } = true;
 
         /// <summary>Kullanıcının panelde DXF/DWG arasında seçtiği çıktı formatı.</summary>
-        public ExportFormat Format { get; set; } = ExportFormat.Dxf;
+        public ExportFormat Format { get; set; } = ExportFormat.Dwg;
 
         public bool CreateMarking { get; set; }
         public bool ShowBendLines { get; set; } = true;

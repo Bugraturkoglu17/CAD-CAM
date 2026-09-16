@@ -43,6 +43,25 @@ namespace CadAutomation.Core.Services
                 results.Add(result);
             }
 
+            if (_exporter is IBatchExportFinalizer finalizer)
+            {
+                try
+                {
+                    var finalizerResult = finalizer.CompleteBatch(options);
+                    if (finalizerResult != null)
+                    {
+                        results.Add(finalizerResult);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new PartProcessResult(
+                        "DWG son işlemi",
+                        PartProcessStatus.Warning,
+                        "DWG çizgi ölçeği uygulanamadı: " + ex.Message));
+                }
+            }
+
             return new BatchResult(results);
         }
     }

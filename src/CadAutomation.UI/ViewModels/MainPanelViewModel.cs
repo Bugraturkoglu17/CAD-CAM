@@ -32,8 +32,8 @@ namespace CadAutomation.UI.ViewModels
         private bool _createFlatPattern = true;
         private bool _exportDxf = true;
         private bool _folderByThickness = true;
-        private bool _isDxfFormat = true;
-        private bool _isDwgFormat;
+        private bool _isDxfFormat;
+        private bool _isDwgFormat = true;
         private bool _createMarking = true;
         private bool _showBendLines = true;
         private bool _autoDimension;
@@ -50,10 +50,10 @@ namespace CadAutomation.UI.ViewModels
             StartProcessCommand = new RelayCommand(StartProcess, _ => HasAnalysisResult);
             ShowLicenseInfoCommand = new RelayCommand(ShowLicenseInfo);
 
-            _selectedBendLineColor = BendLineColorOptions[0]; // "Renksiz" - kullanıcı isteği (2026-09-15): standart varsayılan.
+            _selectedBendLineColor = BendLineColorOptions[1]; // Kırmızı - lazer çıktısındaki büküm merkez çizgisi varsayılanı.
         }
 
-        /// <summary>Ayarlar sekmesi - büküm çizgisi rengi seçenekleri. "Renksiz" her zaman ilk/varsayılan.</summary>
+        /// <summary>Ayarlar sekmesi - büküm çizgisi rengi seçenekleri. Kırmızı varsayılandır.</summary>
         public IReadOnlyList<BendLineColorOption> BendLineColorOptions { get; } = new[]
         {
             new BendLineColorOption("Renksiz", null),
@@ -162,24 +162,34 @@ namespace CadAutomation.UI.ViewModels
 
         private void RunAnalysis(object? parameter)
         {
-            var assembly = _activeAssemblyProvider.GetActiveAssembly();
-            if (assembly == null)
+            try
+            {
+                var assembly = _activeAssemblyProvider.GetActiveAssembly();
+                if (assembly == null)
+                {
+                    HasAnalysisResult = false;
+                    _lastAnalysisResult = null;
+                    StatusMessage = "Analiz için önce bir Assembly (.iam) dosyası açık olmalı.";
+                    return;
+                }
+
+                var result = _collector.Collect(assembly);
+                _lastAnalysisResult = result;
+
+                TotalComponentCount = result.TotalComponentCount;
+                UniquePartCount = result.UniquePartCount;
+                SheetMetalCount = result.SheetMetalCount;
+                SkippedCount = result.SkippedSuppressedCount;
+                HasAnalysisResult = true;
+                StatusMessage = $"Analiz tamamlandı - {result.SheetMetalCount} Sheet Metal parça bulundu.";
+            }
+            catch (Exception ex)
             {
                 HasAnalysisResult = false;
                 _lastAnalysisResult = null;
-                StatusMessage = "Analiz için önce bir Assembly (.iam) dosyası açık olmalı.";
-                return;
+                StatusMessage = "Montaj analizi güvenli biçimde durduruldu.";
+                NotifyUser?.Invoke("Analiz Hatası", "Montaj analizi tamamlanamadı: " + ex.Message);
             }
-
-            var result = _collector.Collect(assembly);
-            _lastAnalysisResult = result;
-
-            TotalComponentCount = result.TotalComponentCount;
-            UniquePartCount = result.UniquePartCount;
-            SheetMetalCount = result.SheetMetalCount;
-            SkippedCount = result.SkippedSuppressedCount;
-            HasAnalysisResult = true;
-            StatusMessage = $"Analiz tamamlandı - {result.SheetMetalCount} Sheet Metal parça bulundu.";
         }
 
         private void StartProcess(object? parameter)

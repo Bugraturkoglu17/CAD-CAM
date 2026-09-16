@@ -73,6 +73,24 @@ namespace CadAutomation.Core.Tests
             Assert.Equal(1, result.SuccessCount);
         }
 
+        [Fact]
+        public void Tum_parcalar_bittikten_sonra_batch_finalizer_cagrilir()
+        {
+            var part = new FakeCadDocument(@"C:\parts\sm.ipt", isSheetMetal: true, thicknessCm: 0.2);
+            var analysis = new AssemblyAnalysisResult(
+                totalComponentCount: 1,
+                skippedSuppressedCount: 0,
+                uniqueParts: new List<UniquePart> { MakeUniquePart(part) });
+            var exporter = new FakeFlatPatternDxfExporter();
+
+            var result = new BatchProcessor(exporter).Process(
+                analysis,
+                new BatchExportOptions { OutputFolder = @"C:\out" });
+
+            Assert.True(exporter.BatchCompleted);
+            Assert.Single(result.Results);
+        }
+
         private static UniquePart MakeUniquePart(FakeCadDocument document) => new UniquePart(document);
     }
 }

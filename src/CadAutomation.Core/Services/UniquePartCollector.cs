@@ -25,32 +25,39 @@ namespace CadAutomation.Core.Services
                 for (int i = 0; i < occurrences.Count; i++)
                 {
                     var occurrence = occurrences[i];
-
-                    if (occurrence.Suppressed)
+                    try
                     {
+                        if (occurrence.Suppressed)
+                        {
+                            skippedSuppressed++;
+                            continue;
+                        }
+
+                        var document = occurrence.Document;
+                        totalComponents++;
+
+                        if (document.IsAssemblyDocument)
+                        {
+                            // Alt montajın kendisi bir "parça" değildir (DXF/sheet metal adayı olamaz),
+                            // sadece içindeki occurrence'lara inilir.
+                            Traverse(occurrence.ChildOccurrences);
+                            continue;
+                        }
+
+                        var key = document.FullFileName;
+                        if (!uniqueByKey.TryGetValue(key, out var uniquePart))
+                        {
+                            uniquePart = new UniquePart(document);
+                            uniqueByKey[key] = uniquePart;
+                        }
+                        uniquePart.IncrementOccurrence();
+                    }
+                    catch (Exception)
+                    {
+                        // CAD adaptörü unresolved/suppressed bir occurrence için COM hatası
+                        // döndürebilir. Tek bozuk referans tüm büyük montaj analizini durdurmasın.
                         skippedSuppressed++;
-                        continue;
                     }
-
-                    totalComponents++;
-
-                    var document = occurrence.Document;
-
-                    if (document.IsAssemblyDocument)
-                    {
-                        // Alt montajın kendisi bir "parça" değildir (DXF/sheet metal adayı olamaz),
-                        // sadece içindeki occurrence'lara inilir.
-                        Traverse(occurrence.ChildOccurrences);
-                        continue;
-                    }
-
-                    var key = document.FullFileName;
-                    if (!uniqueByKey.TryGetValue(key, out var uniquePart))
-                    {
-                        uniquePart = new UniquePart(document);
-                        uniqueByKey[key] = uniquePart;
-                    }
-                    uniquePart.IncrementOccurrence();
                 }
             }
 

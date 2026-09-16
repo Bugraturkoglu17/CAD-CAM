@@ -18,22 +18,19 @@ namespace CadAutomation.Core.Models
         public string BendDownLayer { get; set; } = "BEND_DOWN";
 
         /// <summary>
-        /// Kullanıcı isteği (2026-09-15): büküm çizgisi rengi Ayarlar'dan değiştirilebilmeli,
-        /// standart/varsayılan seçenek "Renksiz" (null) olmalı - yani renk hiç override edilmez,
-        /// Inventor'ın çevirmeninin kendi varsayılan rengi (ByLayer/beyaz-siyah) kullanılır.
+        /// Büküm çizgisi rengi Ayarlar'dan değiştirilebilir. Lazer çıktısında merkez çizgisinin
+        /// kesim konturundan açıkça ayrılması için varsayılan kırmızıdır (ACI 1).
         /// </summary>
-        public int? BendLineColorAci { get; set; } = null;
+        public int? BendLineColorAci { get; set; } = 1;
 
         /// <summary>
-        /// Kullanıcı isteği (2026-09-15): büküm çizgileri çizgi-nokta (dash-dot) olmalı, düz çizgi
-        /// olmamalı - Inventor'ın kendi Flat Pattern görünümündeki gösterimle birebir eşleşmeli.
-        /// "DASHDOT", DXF'in standart AutoCAD linetype isimlerinden biri (TABLES/LTYPE bölümünde
-        /// Inventor'ın çevirmeni tarafından zaten önceden tanımlanmış oluyor).
+        /// Kullanıcı isteği (2026-09-15): büküm merkez çizgisi kesikli olmalı, düz çizgi
+        /// olmamalı. "DASHED", DXF'in standart AutoCAD linetype isimlerinden biridir.
         /// </summary>
-        public string BendLineType { get; set; } = "DASHDOT";
+        public string BendLineType { get; set; } = "DASHED";
 
         /// <summary>
-        /// Kullanıcı isteği (2026-09-15): DASHDOT deseni Inventor çıktısında 1mm'de bir tekrarlıyor
+        /// Kullanıcı isteği (2026-09-15): kesikli desen Inventor çıktısında 1mm'de bir tekrarlıyor
         /// (birim dönüşümü yapılmamış inç bazlı bir tanımdan kalma) - normal parça boyutlarında bu
         /// kadar sık tekrar görsel/çıktıda düz çizgi gibi algılanıyor. $LTSCALE ile bu, deseni
         /// "gererek" gerçekten ayırt edilebilir kesikli-noktalı hale getiriyor.

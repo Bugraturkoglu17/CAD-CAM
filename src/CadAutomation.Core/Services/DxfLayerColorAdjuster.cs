@@ -5,10 +5,9 @@ namespace CadAutomation.Core.Services
 {
     /// <summary>
     /// DXF LAYER tablosundaki renk (ACI, kod 62) ve çizgi tipi (kod 6) değerlerini dosya
-    /// yazıldıktan SONRA post-process ile günceller. Inventor'ın FlatPattern translator'ı
-    /// (WriteDataToFile) options string'i üzerinden sadece layer İSMİNİ ayarlamaya izin veriyor,
-    /// renk/çizgi tipini değil - bu yüzden DXF'in kendisi düz metin olduğundan doğrudan üzerinde
-    /// çalışıyoruz. Çizgi tipi için hedeflenen isim (ör. "DASHDOT") TABLES/LTYPE bölümünde zaten
+    /// yazıldıktan SONRA post-process ile doğrular/günceller. Çeviriciye renk ve çizgi tipi
+    /// seçenekleri de verilir; bu sınıf metin tabanlı DXF çıktısında savunmacı bir son adımdır.
+    /// Çizgi tipi için hedeflenen isim (ör. "DASHED") TABLES/LTYPE bölümünde zaten
     /// tanımlı olmalı - Inventor'ın varsayılan çevirmeni CONTINUOUS/CENTER/DASHDOT/PHANTOM gibi
     /// standart AutoCAD linetype'larını zaten önceden tanımlı olarak ekliyor, ayrıca tanım
     /// eklemeye gerek yok (canlı testte doğrulandı).
