@@ -55,7 +55,8 @@
                         <CheckBox Content="Flat Pattern oluştur" IsChecked="{Binding CreateFlatPattern}" Style="{StaticResource OptionCheckBoxStyle}"/>
                         <CheckBox Content="Export dosyası oluştur" IsChecked="{Binding ExportDxf}" Style="{StaticResource OptionCheckBoxStyle}"/>
                         <StackPanel Orientation="Horizontal" Margin="24,0,0,6" IsEnabled="{Binding ExportDxf}">
-                            <RadioButton Content="DXF" GroupName="ExportFormat" IsChecked="{Binding IsDxfFormat}"
+                            <RadioButton Content="DXF" GroupName="ExportFormat"
+                                         IsChecked="{Binding IsDwgFormat, Converter={x:Static local:InverseBooleanConverter.Instance}}"
                                          Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" Margin="0,0,16,0"/>
                             <RadioButton Content="DWG" GroupName="ExportFormat" IsChecked="{Binding IsDwgFormat}"
                                          Foreground="{StaticResource TextPrimaryBrush}" FontSize="12"/>

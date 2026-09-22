@@ -13,3 +13,6 @@ tools/
 # Windows
 Thumbs.db
 Desktop.ini
+
+# AutoCAD/Inventor canlı test sırasında oluşan çökme raporları (ürünle ilgisi yok)
+ErrorReports/

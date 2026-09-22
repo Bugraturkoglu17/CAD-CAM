@@ -32,7 +32,6 @@ namespace CadAutomation.UI.ViewModels
         private bool _createFlatPattern = true;
         private bool _exportDxf = true;
         private bool _folderByThickness = true;
-        private bool _isDxfFormat;
         private bool _isDwgFormat = true;
         private bool _createMarking = true;
         private bool _showBendLines = true;
@@ -110,30 +109,17 @@ namespace CadAutomation.UI.ViewModels
         public bool ExportDxf { get => _exportDxf; set => SetField(ref _exportDxf, value); }
         public bool FolderByThickness { get => _folderByThickness; set => SetField(ref _folderByThickness, value); }
 
-        /// <summary>DXF/DWG seçimi karşılıklı dışlayıcı - kullanıcı isteği üzerine eklendi.</summary>
-        public bool IsDxfFormat
-        {
-            get => _isDxfFormat;
-            set
-            {
-                if (SetField(ref _isDxfFormat, value) && value)
-                {
-                    SetField(ref _isDwgFormat, false, nameof(IsDwgFormat));
-                }
-            }
-        }
+        /// <summary>
+        /// DXF/DWG seçimi tek bir kaynak bool'a dayanıyor (2026-09-17: eskiden IsDxfFormat/
+        /// IsDwgFormat birbirinden bağımsız iki property'ydi, her biri diğerini setter'ında elle
+        /// false'a çekiyordu - bu, ekranda görünen seçili radio ile StartProcess'in gerçekte
+        /// okuduğu değerin sapmasına yol açan gerçek bir bug'dı, canlı testte doğrulandı: ekranda
+        /// "DXF" işaretliyken export hep DWG üretiyordu). Artık DXF radiosu XAML'de
+        /// InverseBooleanConverter ile bu TEK property'nin tersini gösteriyor - iki farklı
+        /// property'nin senkron kalması gerekmediği için bu sınıf bug yapısal olarak imkansız.
+        /// </summary>
+        public bool IsDwgFormat { get => _isDwgFormat; set => SetField(ref _isDwgFormat, value); }
 
-        public bool IsDwgFormat
-        {
-            get => _isDwgFormat;
-            set
-            {
-                if (SetField(ref _isDwgFormat, value) && value)
-                {
-                    SetField(ref _isDxfFormat, false, nameof(IsDxfFormat));
-                }
-            }
-        }
         public bool CreateMarking { get => _createMarking; set => SetField(ref _createMarking, value); }
         public bool ShowBendLines { get => _showBendLines; set => SetField(ref _showBendLines, value); }
 
