@@ -123,7 +123,7 @@ namespace CadAutomation.UI.ViewModels
         public bool CreateMarking { get => _createMarking; set => SetField(ref _createMarking, value); }
         public bool ShowBendLines { get => _showBendLines; set => SetField(ref _showBendLines, value); }
 
-        /// <summary>Kullanıcı isteği (2026-09-15): her parçanın üzerine, çizgilerle kesişmeyecek şekilde parça adı yazılsın.</summary>
+        /// <summary>Kullanıcı isteği: parça adı gerçek FlatPattern ağırlık merkezine markalansın.</summary>
         public bool AddPartLabel { get => _addPartLabel; set => SetField(ref _addPartLabel, value); }
 
         // PRO modüller - lisans mimarisi hazır olana kadar UI'da kilitli gösteriliyor (madde 10/14).
@@ -209,12 +209,13 @@ namespace CadAutomation.UI.ViewModels
             };
 
             var batchResult = new BatchProcessor(_exporter).Process(_lastAnalysisResult, options);
+            var formatLabel = options.Format == ExportFormat.Dwg ? "DWG" : "DXF";
 
-            StatusMessage = $"İşlem tamamlandı - DXF oluşturulan: {batchResult.SuccessCount}, Atlanan: {batchResult.SkippedCount}, Hatalı: {batchResult.FailedCount}";
+            StatusMessage = $"İşlem tamamlandı - {formatLabel} oluşturulan: {batchResult.SuccessCount}, Atlanan: {batchResult.SkippedCount}, Hatalı: {batchResult.FailedCount}";
 
             var summary = new StringBuilder();
             summary.AppendLine($"İşlenen Sheet Metal: {batchResult.Results.Count}");
-            summary.AppendLine($"DXF oluşturulan: {batchResult.SuccessCount}");
+            summary.AppendLine($"{formatLabel} oluşturulan: {batchResult.SuccessCount}");
             summary.AppendLine($"Atlanan: {batchResult.SkippedCount}");
             summary.AppendLine($"Hatalı: {batchResult.FailedCount}");
 

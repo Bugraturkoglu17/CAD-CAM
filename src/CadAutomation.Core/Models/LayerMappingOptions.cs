@@ -30,10 +30,9 @@ namespace CadAutomation.Core.Models
         public string BendLineType { get; set; } = "DASHED";
 
         /// <summary>
-        /// Kullanıcı isteği (2026-09-15): kesikli desen Inventor çıktısında 1mm'de bir tekrarlıyor
-        /// (birim dönüşümü yapılmamış inç bazlı bir tanımdan kalma) - normal parça boyutlarında bu
-        /// kadar sık tekrar görsel/çıktıda düz çizgi gibi algılanıyor. $LTSCALE ile bu, deseni
-        /// "gererek" gerçekten ayırt edilebilir kesikli-noktalı hale getiriyor.
+        /// Metin tabanlı DXF çıktısında kesikli desenin genel $LTSCALE değeridir. DWG çıktısı
+        /// Inventor'ın kendi "Dashed Space" çizgi tipini doğrudan kullanır ve AutoCAD son işlemi
+        /// gerektirmez.
         /// </summary>
         public double BendLineTypeScale { get; set; } = 10.0;
 

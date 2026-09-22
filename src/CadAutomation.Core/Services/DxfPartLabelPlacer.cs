@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using CadAutomation.Core.Models;
 
 namespace CadAutomation.Core.Services
 {
@@ -147,6 +148,152 @@ namespace CadAutomation.Core.Services
             File.WriteAllLines(dxfFilePath, lines);
             return true;
         }
+
+        /// <summary>
+        /// Inventor'dan alınan kesin koordinatlara bir veya daha fazla orta-merkez hizalı MTEXT
+        /// ekler. Parça adı için FlatPattern ağırlık merkezi; radius yazıları için ilgili büküm
+        /// çizgisinin konumu kullanılır. Gerekli MARKING katmanı dosyada yoksa güvenli bir handle
+        /// ile LAYER tablosuna eklenir.
+        /// </summary>
+        /// <returns>Başarıyla eklenen metin sayısı.</returns>
+        public static int InsertAnnotations(string dxfFilePath, IReadOnlyCollection<CadTextAnnotation> annotations)
+        {
+            if (dxfFilePath == null) throw new ArgumentNullException(nameof(dxfFilePath));
+            if (annotations == null) throw new ArgumentNullException(nameof(annotations));
+
+            var validAnnotations = annotations
+                .Where(annotation => annotation != null && !string.IsNullOrWhiteSpace(annotation.Text))
+                .ToList();
+            if (validAnnotations.Count == 0) return 0;
+
+            var lines = File.ReadAllLines(dxfFilePath).ToList();
+            long nextHandleValue = FindMaxHandle(lines) + 1;
+
+            foreach (var layer in validAnnotations
+                .GroupBy(annotation => annotation.LayerName, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First()))
+            {
+                if (EnsureLayer(lines, layer.LayerName, layer.LayerColorAci, nextHandleValue))
+                {
+                    nextHandleValue++;
+                }
+            }
+
+            int insertAt = FindEntitiesEndSecIndex(lines);
+            if (insertAt < 0) return 0;
+
+            var ownerHandle = FindOwnerHandle(lines);
+            var entityLines = new List<string>();
+            foreach (var annotation in validAnnotations)
+            {
+                var newHandle = nextHandleValue.ToString("X", CultureInfo.InvariantCulture);
+                nextHandleValue++;
+
+                entityLines.AddRange(new[] { "0", "MTEXT", "5", newHandle });
+                if (ownerHandle != null) entityLines.AddRange(new[] { "330", ownerHandle });
+                entityLines.AddRange(new[]
+                {
+                    "100", "AcDbEntity",
+                    "8", annotation.LayerName,
+                    "100", "AcDbMText",
+                    "10", annotation.XMillimeters.ToString(CultureInfo.InvariantCulture),
+                    "20", annotation.YMillimeters.ToString(CultureInfo.InvariantCulture),
+                    "30", "0.0",
+                    "40", annotation.HeightMillimeters.ToString(CultureInfo.InvariantCulture),
+                    "50", annotation.RotationRadians.ToString(CultureInfo.InvariantCulture),
+                    "71", "5",
+                    "1", EscapeMText(annotation.Text),
+                });
+            }
+
+            lines.InsertRange(insertAt, entityLines);
+            BumpHandSeed(lines, nextHandleValue);
+            File.WriteAllLines(dxfFilePath, lines);
+            return validAnnotations.Count;
+        }
+
+        private static bool EnsureLayer(List<string> lines, string layerName, int colorAci, long handleValue)
+        {
+            if (LayerExists(lines, layerName)) return false;
+
+            bool inLayerTable = false;
+            string? layerTableHandle = null;
+            string? plotStyleHandle = null;
+            int layerCountValueIndex = -1;
+            int endTableIndex = -1;
+
+            for (int i = 0; i + 1 < lines.Count; i += 2)
+            {
+                var code = lines[i].Trim();
+                var value = lines[i + 1].Trim();
+
+                if (!inLayerTable && code == "0" && value == "TABLE" &&
+                    i + 3 < lines.Count && lines[i + 2].Trim() == "2" && lines[i + 3].Trim() == "LAYER")
+                {
+                    inLayerTable = true;
+                    continue;
+                }
+
+                if (!inLayerTable) continue;
+                if (code == "5" && layerTableHandle == null) layerTableHandle = value;
+                if (code == "390" && plotStyleHandle == null) plotStyleHandle = value;
+                if (code == "70" && layerCountValueIndex < 0) layerCountValueIndex = i + 1;
+                if (code == "0" && value == "ENDTAB")
+                {
+                    endTableIndex = i;
+                    break;
+                }
+            }
+
+            if (endTableIndex < 0) return false;
+
+            var handle = handleValue.ToString("X", CultureInfo.InvariantCulture);
+            var layerLines = new List<string> { "0", "LAYER", "5", handle };
+            if (layerTableHandle != null) layerLines.AddRange(new[] { "330", layerTableHandle });
+            layerLines.AddRange(new[]
+            {
+                "100", "AcDbSymbolTableRecord",
+                "100", "AcDbLayerTableRecord",
+                "2", layerName,
+                "70", "0",
+                "62", colorAci.ToString(CultureInfo.InvariantCulture),
+                "6", "CONTINUOUS",
+                "370", "-3",
+            });
+            if (plotStyleHandle != null) layerLines.AddRange(new[] { "390", plotStyleHandle });
+            lines.InsertRange(endTableIndex, layerLines);
+
+            if (layerCountValueIndex >= 0 &&
+                int.TryParse(lines[layerCountValueIndex], NumberStyles.Integer, CultureInfo.InvariantCulture, out var count))
+            {
+                lines[layerCountValueIndex] = (count + 1).ToString(CultureInfo.InvariantCulture);
+            }
+            return true;
+        }
+
+        private static bool LayerExists(IReadOnlyList<string> lines, string layerName)
+        {
+            bool inLayerRecord = false;
+            for (int i = 0; i + 1 < lines.Count; i += 2)
+            {
+                var code = lines[i].Trim();
+                var value = lines[i + 1].Trim();
+                if (code == "0")
+                {
+                    inLayerRecord = value == "LAYER";
+                    continue;
+                }
+                if (inLayerRecord && code == "2" &&
+                    string.Equals(value, layerName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static string EscapeMText(string text) =>
+            text.Replace("\\", "\\\\").Replace("{", "\\{").Replace("}", "\\}");
 
         /// <summary>Dosyadaki TÜM mevcut handle'ların (grup kodu 5, $HANDSEED dahil) en büyüğü.</summary>
         private static long FindMaxHandle(List<string> lines)

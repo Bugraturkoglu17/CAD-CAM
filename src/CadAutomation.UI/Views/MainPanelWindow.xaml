@@ -63,8 +63,8 @@
                         </StackPanel>
                         <CheckBox Content="Kalınlığa göre klasörle" IsChecked="{Binding FolderByThickness}" Style="{StaticResource OptionCheckBoxStyle}"/>
                         <CheckBox Content="Markalama oluştur" IsChecked="{Binding CreateMarking}" Style="{StaticResource OptionCheckBoxStyle}"/>
-                        <CheckBox Content="Büküm çizgilerini göster" IsChecked="{Binding ShowBendLines}" Style="{StaticResource OptionCheckBoxStyle}"/>
-                        <CheckBox Content="Parça adını yaz" IsChecked="{Binding AddPartLabel}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Büküm çizgilerini ve radius değerlerini göster" IsChecked="{Binding ShowBendLines}" Style="{StaticResource OptionCheckBoxStyle}"/>
+                        <CheckBox Content="Parça adını ağırlık merkezine markala" IsChecked="{Binding AddPartLabel}" Style="{StaticResource OptionCheckBoxStyle}"/>
 
                         <Separator Margin="0,8" Background="{StaticResource BorderBrush}"/>
 

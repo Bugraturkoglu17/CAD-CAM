@@ -16,8 +16,8 @@ namespace CadAutomation.Core.Models
         public LayerMappingOptions LayerMapping { get; set; } = new LayerMappingOptions();
 
         /// <summary>
-        /// Kullanıcı isteği (2026-09-15): her parçanın flat pattern'i üzerine parça adı/numarası
-        /// yazılsın, hiçbir çizgiyle (kesim/büküm) kesişmesin - kesişirse lazer hatalı keser.
+        /// Her parçanın flat pattern'i üzerine parça adı/numarası, Inventor'ın hesapladığı gerçek
+        /// ağırlık merkezi koordinatında markalansın.
         /// </summary>
         public bool AddPartLabel { get; set; } = true;
 

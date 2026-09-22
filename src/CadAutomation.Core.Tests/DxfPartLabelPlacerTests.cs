@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
+using CadAutomation.Core.Models;
 using CadAutomation.Core.Services;
 using Xunit;
 
@@ -98,6 +99,45 @@ namespace CadAutomation.Core.Tests
         }
 
         [Fact]
+        public void InsertAnnotations_agirlik_merkezi_ve_radius_yazilarini_katmanlariyla_ekler()
+        {
+            const string dxf =
+                "0\nSECTION\n2\nHEADER\n9\n$HANDSEED\n5\n20\n0\nENDSEC\n" +
+                "0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n5\n2\n70\n2\n" +
+                "0\nLAYER\n5\n10\n330\n2\n100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n" +
+                "0\nLAYER\n5\n11\n330\n2\n100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n2\nBEND_DOWN\n70\n0\n62\n1\n6\nDASHED\n" +
+                "0\nENDTAB\n0\nENDSEC\n" +
+                "0\nSECTION\n2\nENTITIES\n" +
+                "0\nLINE\n5\n12\n330\n1F\n8\nBEND_DOWN\n10\n0\n20\n25\n11\n100\n21\n25\n" +
+                "0\nENDSEC\n0\nEOF\n";
+            var path = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(path, dxf);
+                var annotations = new[]
+                {
+                    new CadTextAnnotation("PART-01", 50, 40, 6, 0, "MARKING", 2),
+                    new CadTextAnnotation("R2", 15, 28, 3, 0, "BEND_DOWN", 1),
+                };
+
+                var inserted = DxfPartLabelPlacer.InsertAnnotations(path, annotations);
+                var content = File.ReadAllText(path).Replace("\r\n", "\n");
+
+                Assert.Equal(2, inserted);
+                Assert.Contains("2\nMARKING\n70\n0\n62\n2", content);
+                Assert.Equal(2, CountOccurrences(content, "0\nMTEXT\n"));
+                Assert.Contains("8\nMARKING\n100\nAcDbMText\n10\n50\n20\n40", content);
+                Assert.Contains("71\n5\n1\nPART-01", content);
+                Assert.Contains("8\nBEND_DOWN\n100\nAcDbMText\n10\n15\n20\n28", content);
+                Assert.Contains("71\n5\n1\nR2", content);
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
+
+        [Fact]
         public void InsertLabel_gecerli_geometri_yoksa_false_doner_ve_dosyaya_dokunulmaz()
         {
             var path = Path.GetTempFileName();
@@ -162,6 +202,18 @@ namespace CadAutomation.Core.Tests
             }
 
             return (x, y, height, content);
+        }
+
+        private static int CountOccurrences(string text, string value)
+        {
+            int count = 0;
+            int index = 0;
+            while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+            {
+                count++;
+                index += value.Length;
+            }
+            return count;
         }
     }
 }
