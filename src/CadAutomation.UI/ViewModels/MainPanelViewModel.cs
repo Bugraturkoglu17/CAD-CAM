@@ -167,7 +167,8 @@ namespace CadAutomation.UI.ViewModels
                 SheetMetalCount = result.SheetMetalCount;
                 SkippedCount = result.SkippedSuppressedCount;
                 HasAnalysisResult = true;
-                StatusMessage = $"Analiz tamamlandı - {result.SheetMetalCount} Sheet Metal parça bulundu.";
+                StatusMessage = $"Analiz tamamlandı - {result.SheetMetalCount} Sheet Metal parça bulundu " +
+                    $"(toplam benzersiz parça: {result.UniqueParts.Count}, sheet metal olmayan: {result.UniqueParts.Count - result.SheetMetalCount}, atlanan/çözülemeyen: {result.SkippedSuppressedCount}).";
             }
             catch (Exception ex)
             {

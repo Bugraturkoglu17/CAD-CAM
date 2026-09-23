@@ -20,7 +20,26 @@ namespace CadAutomation.Inventor.Adapters
 
             if (document is Inv.PartDocument partDocument)
             {
-                _sheetMetalDefinition = partDocument.ComponentDefinition as Inv.SheetMetalComponentDefinition;
+                var candidate = partDocument.ComponentDefinition as Inv.SheetMetalComponentDefinition;
+                _sheetMetalDefinition = candidate;
+                IsFirstFeatureExtrude = candidate != null && FirstFeatureIsExtrude(candidate);
+            }
+        }
+
+        /// <summary>
+        /// Kullanıcı isteği (2026-09-23): özellik ağacında İLK özellik Extrude ise parça katı modelle
+        /// çizilmiştir; bu parçalar elenmez, "HATALI" klasörüne aktarılır. Face ile başlayanlar normal.
+        /// </summary>
+        private static bool FirstFeatureIsExtrude(Inv.SheetMetalComponentDefinition definition)
+        {
+            try
+            {
+                var features = definition.Features;
+                return features.Count > 0 && features[1].Type == Inv.ObjectTypeEnum.kExtrudeFeatureObject;
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 
@@ -38,6 +57,9 @@ namespace CadAutomation.Inventor.Adapters
         public string DisplayName => _document.DisplayName;
 
         public bool IsAssemblyDocument => _document.DocumentType == Inv.DocumentTypeEnum.kAssemblyDocumentObject;
+
+        /// <summary>Özellik ağacında ilk özellik Extrude ise parça katı modelle çizilmiş (hatalı) sayılır.</summary>
+        public bool IsFirstFeatureExtrude { get; }
 
         public bool IsSheetMetal => _sheetMetalDefinition != null;
 

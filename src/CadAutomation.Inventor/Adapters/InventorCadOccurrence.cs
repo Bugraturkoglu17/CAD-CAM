@@ -78,7 +78,19 @@ namespace CadAutomation.Inventor.Adapters
 
         private ICadDocument BuildDocument()
         {
-            return new InventorCadDocument((Inv.Document)_occurrence.Definition.Document);
+            Inv.Document document;
+            try
+            {
+                document = (Inv.Document)_occurrence.Definition.Document;
+            }
+            catch (Exception)
+            {
+                // Hafif (lightweight/express) yüklenmiş occurrence'larda Definition erişimi E_FAIL verebilir;
+                // referans edilen belgeyi descriptor üzerinden çöz - parça sessizce düşmesin.
+                document = (Inv.Document)_occurrence.ReferencedDocumentDescriptor.ReferencedDocument;
+            }
+
+            return new InventorCadDocument(document);
         }
     }
 }

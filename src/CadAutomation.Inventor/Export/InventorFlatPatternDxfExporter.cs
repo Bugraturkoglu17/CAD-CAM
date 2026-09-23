@@ -18,9 +18,10 @@ namespace CadAutomation.Inventor.Export
     /// DXF export, FlatPattern.DataIO.WriteDataToFile ile yapılıyor - Inventor'ın generic
     /// TranslatorAddIn.SaveCopyAs mekanizması yerine flat pattern'e özel, daha basit API.
     /// </summary>
-    public sealed class InventorFlatPatternDxfExporter : IFlatPatternDxfExporter
+    public sealed class InventorFlatPatternDxfExporter : IFlatPatternDxfExporter, IBatchExportFinalizer
     {
         private readonly NamingTemplateEngine _namingEngine = new NamingTemplateEngine();
+        private readonly List<string> _pendingDwgScaleFiles = new List<string>();
 
         /// <summary>
         /// Inventor'ın flat pattern DXF çıktısına varsayılan olarak eklediği, büküm merkez çizgisinin
@@ -100,6 +101,11 @@ namespace CadAutomation.Inventor.Export
                     flatPattern.DataIO.WriteDataToFile(translatorOptions, fullPath);
                 }
 
+                if (options.Format == ExportFormat.Dwg && options.ShowBendLines && options.LayerMapping.BendLineTypeScale > 0)
+                {
+                    _pendingDwgScaleFiles.Add(fullPath);
+                }
+
                 if (options.Format == ExportFormat.Dxf)
                 {
                     if (options.ShowBendLines)
@@ -126,6 +132,24 @@ namespace CadAutomation.Inventor.Export
             catch (Exception ex)
             {
                 return new PartProcessResult(identifier, PartProcessStatus.Failed, "DWG/DXF dışa aktarımı başarısız: " + ex.Message);
+            }
+        }
+
+        public PartProcessResult? CompleteBatch(BatchExportOptions options)
+        {
+            if (_pendingDwgScaleFiles.Count == 0) return null;
+            try
+            {
+                DwgLineTypeScaleAdjuster.Apply(_pendingDwgScaleFiles, options.LayerMapping.BendLineTypeScale);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new PartProcessResult("DWG çizgi ölçeği", PartProcessStatus.Warning, "DWG dosyaları oluşturuldu ancak kesikli çizgi ölçeği uygulanamadı: " + ex.Message);
+            }
+            finally
+            {
+                _pendingDwgScaleFiles.Clear();
             }
         }
 
@@ -533,14 +557,16 @@ namespace CadAutomation.Inventor.Export
                 var radiusText = "R" + radiusMm.ToString("0.###", CultureInfo.InvariantCulture) +
                     " " + directionLabel + " " + angleDegrees.ToString("0", CultureInfo.InvariantCulture) + "°";
                 var lineLengthMm = bend.LengthCm * centimetersToMillimeters;
-                var desiredHeight = Clamp(smallerSideMm * 0.035, 2.5, 8.0);
+                var desiredHeight = Clamp(smallerSideMm * 0.06, 3.0, 30.0) * 0.5; // parça adı yüksekliğinin yarısı
                 var maximumFittingHeight = lineLengthMm / (Math.Max(radiusText.Length, 1) * 0.6 * 2.0);
-                var textHeight = Math.Max(1.5, Math.Min(desiredHeight, maximumFittingHeight));
+                var textHeight = desiredHeight;
 
-                // Yazıyı çizginin okunur başlangıcından %15 içeri alıp parçanın ağırlık merkezine
-                // bakan normal yönüne kaydırıyoruz. Böylece her radius kendi büküm çizgisinin
-                // üzerinde/yanında kalırken kesikli çizgi harflerin içinden geçmiyor.
-                const double alongFraction = 0.15;
+                // Kullanıcı isteği (2026-09-22): metin kırmızı büküm çizgisinin TAM ORTASINDA
+                // olmalı (çizginin başına yakın değil) ve HER ZAMAN yatay/okunur olmalı - dikey
+                // bir büküm çizgisinde metni çizgiyle birlikte döndürmek (önceki davranış) okumayı
+                // zorlaştırıyordu. Parçanın ağırlık merkezine bakan normal yönüne küçük bir payla
+                // kaydırıyoruz ki kesikli çizgi harflerin tam içinden geçmesin.
+                const double alongFraction = 0.5;
                 var xCm = bend.StartXcm + (bend.StopXcm - bend.StartXcm) * alongFraction;
                 var yCm = bend.StartYcm + (bend.StopYcm - bend.StartYcm) * alongFraction;
                 var middleXcm = (bend.StartXcm + bend.StopXcm) / 2.0;
@@ -549,14 +575,14 @@ namespace CadAutomation.Inventor.Export
                 var normalY = bend.DirectionX;
                 var towardCenter = normalX * (massCenter.X - middleXcm) + normalY * (massCenter.Y - middleYcm);
                 var normalSign = towardCenter >= 0 ? 1.0 : -1.0;
-                var offsetMm = textHeight * 0.8;
+                var offsetMm = textHeight * 1.5; // çizgiyle kesişmesin
 
                 annotations.Add(new CadTextAnnotation(
                     radiusText,
                     xCm * centimetersToMillimeters + normalX * normalSign * offsetMm,
                     yCm * centimetersToMillimeters + normalY * normalSign * offsetMm,
                     textHeight,
-                    Math.Atan2(bend.DirectionY, bend.DirectionX),
+                    Math.Atan2(bend.DirectionY, bend.DirectionX), // Daima büküm çizgisine paralel.
                     bend.IsDirectionUp ? options.LayerMapping.BendUpLayer : options.LayerMapping.BendDownLayer,
                     options.LayerMapping.BendLineColorAci ?? 1));
             }
@@ -727,6 +753,11 @@ namespace CadAutomation.Inventor.Export
 
         private static string ResolveTargetFolder(BatchExportOptions options, ICadDocument document)
         {
+            if (document is InventorCadDocument suspect && suspect.IsFirstFeatureExtrude)
+            {
+                return Path.Combine(options.OutputFolder, "HATALI");
+            }
+
             if (!options.FolderByThickness || !document.ThicknessCm.HasValue)
             {
                 return options.OutputFolder;
